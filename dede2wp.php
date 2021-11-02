@@ -538,3 +538,5 @@ class WPCOM_DEDE2WP{
 	    }
 	}
 }
+
+new WPCOM_DEDE2WP();
