@@ -4,7 +4,7 @@
  * Plugin URI: https://www.wpcom.cn/
  * Description: 将织梦系统文章数据迁移到WordPress
  * Author: WPCOM
- * Version: 1.0
+ * Version: 1.1
  * Author URI: https://www.wpcom.cn/
 **/
 
@@ -125,17 +125,25 @@ class WPCOM_DEDE2WP{
 		$query = $this->db->query("SELECT * FROM `" . $prefix . "arctype` WHERE reid={$parent}");
 		$error = '';
 		while ($cat = $query->fetch_object()) {
+			$slug = '';
+			$dir = untrailingslashit($cat->typedir);
+			$dir = $dir ? explode('/', $dir) : array();
+			if(count($dir)){
+				$slug = $dir[count($dir)-1];
+				$_cat = get_term_by( 'slug', $slug, 'category' );
+				$slug = $_cat ? '' : $slug; // 分类别名已经存在，就不设置别名了
+			}
 			$_c = wp_insert_term(
-				$cat->typename,
+				$this->_iconv($cat->typename),
 			    'category',
 			    array(
-			        'description' => $cat->description,
-			        'parent' => $term_id
+			        'description' => $this->_iconv($cat->description),
+			        'parent' => $term_id,
+			        'slug' => $slug
 			    )
 			);
 			if(is_wp_error($_c)){
 				$error = $_c->get_error_message();
-				return false;
 			}else if($_c && $_c['term_id']){
 				add_term_meta( $_c['term_id'], 'wpcom_seo_keywords', $cat->keywords );
 				add_term_meta( $_c['term_id'], 'wpcom_seo_title', $cat->seotitle );
@@ -530,5 +538,3 @@ class WPCOM_DEDE2WP{
 	    }
 	}
 }
-
-new WPCOM_DEDE2WP();
